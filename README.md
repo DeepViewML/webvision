@@ -39,6 +39,5 @@ Copy webvision along with the assets folder to your target device.  The webvisio
 
 Use `webvision --help` for usage instructions which allow overriding the VSL and ZeroMQ socket locations, port mapping, and camera streaming options such as resolution.
 
-# References
 
 [1]: https://github.com/yhirose/cpp-httplib	"C++ HTTP Library"
