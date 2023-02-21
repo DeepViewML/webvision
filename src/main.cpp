@@ -1,16 +1,16 @@
 #include <cstdio>
 #include <cstdlib>
+#include <getopt.h>
 
 #include <deepview_rt.h>
 #include <turbojpeg.h>
 #include <vaal.h>
 #include <videostream.h>
 
-// Handlers are not currently thread-safe
-#define CPPHTTPLIB_THREAD_POOL_COUNT 1
-
 #include "httplib.h"
 #include "zmq.hpp"
+
+#include "version.h"
 
 int
 main(int argc, char** argv)
@@ -20,6 +20,72 @@ main(int argc, char** argv)
     const char* vslpath = "/tmp/camera.vsl";
     const char* subpath = "ipc:///tmp/detect.pub";
     const char* topic   = "DETECTION";
+    int         port    = 8080;
+
+    struct option options[] = {
+        {"help", no_argument, NULL, 'h'},
+        {"version", no_argument, NULL, 'v'},
+        {"camera", required_argument, NULL, 'c'},
+        {"results", required_argument, NULL, 'r'},
+        {"topic", required_argument, NULL, 't'},
+        {"port", required_argument, NULL, 'p'},
+        {NULL},
+    };
+
+    for (;;) {
+        int opt = getopt_long(argc, argv, "hvc:r:t:p:", options, NULL);
+        if (opt == -1) break;
+
+        switch (opt) {
+        case 'h':
+            printf("webvision [hv] [-c PATH] [-r URI] [-t TOPIC] [-p PORT]\n"
+                   "-h, --help\n"
+                   "    display help information\n"
+                   "-v, --version\n"
+                   "    display version information and exit\n"
+                   "-c PATH, --camera PATH\n"
+                   "    use VSL camera stream at PATH (default: %s)\n"
+                   "-r URI, --results URI\n"
+                   "    subscribe to results queue at URI (default: %s)\n"
+                   "-t TOPIC, --topic TOPIC\n"
+                   "    subscribe to publisher topic (default: %s)\n"
+                   "-p PORT, --port PORT\n"
+                   "    bind HTTP server to port PORT (default: %d)\n"
+                   "-s WxH, --size WxH\n"
+                   "    publish camera stream using WxH size (default: "
+                   "%dx%d)\n",
+                   vslpath,
+                   subpath,
+                   topic,
+                   port,
+                   width,
+                   height);
+            return EXIT_SUCCESS;
+        case 'v':
+            printf("webvision %s\n", VERSION);
+            break;
+        case 'c':
+            vslpath = optarg;
+            break;
+        case 'r':
+            subpath = optarg;
+            break;
+        case 't':
+            topic = optarg;
+            break;
+        case 'p':
+            port = atoi(optarg);
+            break;
+        case 's':
+            sscanf(optarg, "%dx%d", &width, &height);
+            break;
+        default:
+            fprintf(stderr,
+                    "invalid parameter %c, try --help for usage\n",
+                    opt);
+            return EXIT_FAILURE;
+        }
+    }
 
     /*
      * Connects to the VSL socket to capture camera frames.
@@ -27,8 +93,9 @@ main(int argc, char** argv)
     auto vsl = vsl_client_init(vslpath, nullptr, true);
 
     /*
-     * Create CPU context which will only be used for load_frame optimized
-     * rescale and pixel format conversion operations ahead of JPEG encoding.
+     * Create CPU context which will only be used for load_frame
+     * optimized rescale and pixel format conversion operations ahead of
+     * JPEG encoding.
      */
     auto vaal = vaal_context_create("cpu");
     if (!vaal) {
@@ -37,8 +104,8 @@ main(int argc, char** argv)
     }
 
     /*
-     * The image tensor is used as the target for the load_frame operation and
-     * will then be mapped for reading by the JPEG encoder.
+     * The image tensor is used as the target for the load_frame operation
+     * and will then be mapped for reading by the JPEG encoder.
      */
     auto          image         = nn_tensor_init(nullptr, nullptr);
     const int32_t image_shape[] = {height, width, 4};
@@ -51,9 +118,9 @@ main(int argc, char** argv)
     }
 
     /*
-     * The server will receive detection events using a ZeroMQ pub/sub socket
-     * where the detection application publishes the results and this overlay
-     * application subscribes to the results.
+     * The server will receive detection events using a ZeroMQ pub/sub
+     * socket where the detection application publishes the results and this
+     * overlay application subscribes to the results.
      */
     zmq::context_t ctx;
     zmq::socket_t  sub(ctx, zmq::socket_type::sub);
@@ -76,7 +143,8 @@ main(int argc, char** argv)
     httplib::Server svr;
 
     /*
-     * The results route will capture the next detection message and return it.
+     * The results route will capture the next detection message and return
+     * it.
      */
     svr.Get("/results",
             [&sub, topic](const httplib::Request&, httplib::Response& res) {
@@ -93,7 +161,8 @@ main(int argc, char** argv)
                 size_t      size      = msg.size();
 
                 if (size < topic_len) {
-                    // Should never happen, topic length greater than message.
+                    // Should never happen, topic length greater than
+                    // message.
                     res.status = 204;
                     return;
                 }
@@ -105,7 +174,8 @@ main(int argc, char** argv)
             });
 
     /*
-     * The camera route will capture the next VSL frame then return it as JPEG
+     * The camera route will capture the next VSL frame then return it as
+     * JPEG
      */
     svr.Get("/camera",
             [vsl,
@@ -165,7 +235,7 @@ main(int argc, char** argv)
             });
 
     svr.set_mount_point("/", "assets");
-    svr.listen("0.0.0.0", 8080);
+    svr.listen("0.0.0.0", port);
 
     return EXIT_SUCCESS;
 }
