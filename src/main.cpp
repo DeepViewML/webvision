@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <getopt.h>
+#include <mutex>
 
 #include <deepview_rt.h>
 #include <turbojpeg.h>
@@ -146,10 +147,13 @@ main(int argc, char** argv)
      * The results route will capture the next detection message and return
      * it.
      */
+    std::mutex results_mutex;
     svr.Get("/results",
-            [&sub, topic](const httplib::Request&, httplib::Response& res) {
-                zmq::message_t msg;
-                auto           ret = sub.recv(msg);
+            [&sub, topic, &results_mutex](const httplib::Request&,
+                                          httplib::Response& res) {
+                std::scoped_lock lk(results_mutex);
+                zmq::message_t   msg;
+                auto             ret = sub.recv(msg);
                 if (!ret) {
                     // Received empty message or error.
                     res.status = 204;
@@ -177,6 +181,7 @@ main(int argc, char** argv)
      * The camera route will capture the next VSL frame then return it as
      * JPEG
      */
+    std::mutex camera_mutex;
     svr.Get("/camera",
             [vsl,
              vaal,
@@ -184,8 +189,10 @@ main(int argc, char** argv)
              width,
              height,
              codec,
-             &jpeg](const httplib::Request&, httplib::Response& res) {
-                auto frame = vsl_frame_wait(vsl, 0);
+             &jpeg,
+             &camera_mutex](const httplib::Request&, httplib::Response& res) {
+                std::scoped_lock lk(camera_mutex);
+                auto             frame = vsl_frame_wait(vsl, 0);
                 if (!frame) {
                     // Timeout waiting for frame
                     res.status = 504;
