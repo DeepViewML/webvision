@@ -34,7 +34,7 @@ main(int argc, char** argv)
     };
 
     for (;;) {
-        int opt = getopt_long(argc, argv, "hvc:r:t:p:", options, NULL);
+        int opt = getopt_long(argc, argv, "hvc:r:t:p:s:", options, NULL);
         if (opt == -1) break;
 
         switch (opt) {
