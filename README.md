@@ -6,7 +6,7 @@ Users can customize the application by adding additional visualizations and cont
 
 # Implementation
 
-This webvision-cpp branch of the application implements the web server in C++ using the [C++ HTTP library](1).  Camera frames are captured using VSL and resized down using the VAAL library before encoding as JPEG for publishing to the /camera API endpoint.  The model results are captured using ZeroMQ and published to the /results API endpoint.  Finally the static site is published using the file serving services of Crow.
+This webvision-cpp branch of the application implements the web server in C++ using the [C++ HTTP library][1].  Camera frames are captured using VSL and resized down using the VAAL library before encoding as JPEG for publishing to the /camera API endpoint.  The model results are captured using ZeroMQ and published to the /results API endpoint.  Finally the static site is published using the file serving services of Crow.
 
 The design is meant to be simple to implement and extend though a number of improvements could be made to improve performance and scalability.  Instead of having the client javascript poll the server for camera and detection updates these could be published over a websocket connection, and using an hevc codec would allow higher resolution and framerates to be provided.  These updates are planned in a future update.
 
