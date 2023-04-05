@@ -9,8 +9,7 @@ set(PROJECT_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
 set(CMAKE_CXX_STANDARD 17)
 
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.h
-     "#define VERSION \"${PROJECT_VERSION}${VERSION_EXTRA}\"\n")
+add_definitions(-DVERSION=\"${PROJECT_VERSION}${VERSION_EXTRA}\")
 
 find_package(Threads)
 find_package(JPEG REQUIRED)

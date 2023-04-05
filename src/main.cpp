@@ -11,7 +11,9 @@
 #include "httplib.h"
 #include "zmq.hpp"
 
-#include "version.h"
+#ifndef VERSION
+#define VERSION "unversioned"
+#endif
 
 int
 main(int argc, char** argv)
@@ -64,7 +66,7 @@ main(int argc, char** argv)
             return EXIT_SUCCESS;
         case 'v':
             printf("webvision %s\n", VERSION);
-            break;
+            return EXIT_SUCCESS;
         case 'c':
             vslpath = optarg;
             break;
