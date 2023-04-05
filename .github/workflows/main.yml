@@ -31,7 +31,7 @@ jobs:
         curl https://deepviewml.com/apt/key.pub | gpg --dearmor -o /usr/share/keyrings/deepviewml.gpg
         echo 'deb [signed-by=/usr/share/keyrings/deepviewml.gpg] https://deepviewml.com/apt stable main' > /etc/apt/sources.list.d/deepviewml.list
         apt-get update
-        apt-get install -y --no-install-recommends libvideostream-dev libvaal-dev libdeepview-rt-dev libzmq3-dev
+        apt-get install -y --no-install-recommends libvideostream-dev libvaal-dev libdeepview-rt-dev libzmq3-dev libturbojpeg0-dev
 
     - name: Dependencies (aarch64)
       if: matrix.arch == 'aarch64'
@@ -40,7 +40,7 @@ jobs:
       run: |
         dpkg --add-architecture arm64
         apt-get update
-        apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libvideostream:arm64 libvaal:arm64 libdeepview-rt:arm64 libzmq5:arm64 libzmq3-dev:arm64
+        apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libvideostream:arm64 libvaal:arm64 libdeepview-rt:arm64 libzmq5:arm64 libzmq3-dev:arm64 libturbojpeg:arm64
 
     - name: Build
       run: make CXX=${{ matrix.arch }}-linux-gnu-g++ APP=webvision-linux-${{ matrix.arch }}
