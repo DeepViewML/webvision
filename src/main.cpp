@@ -139,7 +139,7 @@ main(int argc, char** argv)
     if (!codec) {
         fprintf(stderr,
                 "failed to initialize jpeg codec: %s\n",
-                tjGetErrorStr2(NULL));
+                tjGetErrorStr());
         return EXIT_FAILURE;
     }
 
@@ -232,7 +232,7 @@ main(int argc, char** argv)
                                 TJSAMP_420,
                                 90,
                                 TJFLAG_NOREALLOC)) {
-                    auto        error = tjGetErrorStr2(codec);
+                    auto        error = tjGetErrorStr();
                     std::string error_string(error);
                     tjFree((uint8_t*) error);
                     res.status = 500;
